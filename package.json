@@ -1,0 +1,18 @@
+{
+  "name": "back_b",
+  "version": "1.0.0",
+  "description": "FSD backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --env-file=.env_dev index.js",
+    "dev": "nodemon --env-file=.env_dev index.js"
+  },
+  "author": "Menachi",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
