@@ -12,4 +12,6 @@ router.delete("/:id", moviesController.deleteMovie);
 
 router.put("/:id", moviesController.updateMovie);
 
+
 module.exports = router;
+

@@ -20,6 +20,10 @@ const getMovieById = async (req, res) => {
   const id = req.params.id;
   try {
     const movie = await movieModel.findById(id);
+
+    if (!movie) {
+      return res.status(404).send("Movie not found");
+    }
     res.json(movie);
   } catch (err) {
     console.error(err);
@@ -43,7 +47,7 @@ const deleteMovie = async (req, res) => {
   const id = req.params.id;
   try {
     const deletedMovie = await movieModel.findByIdAndDelete(id);
-    res.status(200).json(deletedMovie);
+    res.status(200).json(deletedMovie._id);
   } catch (err) {
     console.error(err);
     res.status(500).send("Error deleting movie");
