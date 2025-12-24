@@ -1,6 +1,8 @@
 import express, { Express } from "express";
 import mongoose from "mongoose";
 import moviesRoute from "./routes/moviesRoute";
+import dotenv from "dotenv";
+dotenv.config({path: '.env.dev'});
 
 const app = express();
 app.use(express.json());

@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const moviesRoute_1 = __importDefault(require("./routes/moviesRoute"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config({ path: '.env.dev' });
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use("/movie", moviesRoute_1.default);
