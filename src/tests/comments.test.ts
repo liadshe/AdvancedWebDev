@@ -1,31 +1,18 @@
 import request from "supertest";
 import initApp from '../index';
 import commentModel from '../model/commentsModel';
-import { Express } from 'express';    
+import { Express } from 'express';  
+import {registerUserTest, commentData, userData} from "./testUtils";
 
 let app:Express;
-type Comment = {
-    userId: string;
-    message: string;
-    movieId: string;
-    _id?: string;
-};
-const commentsData:Comment[] = [
-    {
-        userId: "1111", message: "comment1", movieId: "movieId1",
-    },
-    {
-        userId: "2222", message: "comment2", movieId: "movieId2",
-    },
-    {
-        userId: "3333", message: "comment3", movieId: "movieId1",
-    }
-];
+
+
 
 beforeAll(async () => {  
     console.log("Befroe All Tests") 
     app = await initApp();    
    await commentModel.deleteMany();
+   await registerUserTest(app);
 });
 
 afterAll(done => {      
@@ -40,9 +27,10 @@ describe('Comments API', () => {
     });
 
     test('Create Comments', async () => {
-       for (const comment of commentsData){
+       for (const comment of commentData){
         const response = await request(app)
             .post('/comment')
+            .set("Authorization", "Bearer " + userData.token)
             .send(comment);
         
         expect(response.statusCode).toBe(201);
@@ -55,47 +43,49 @@ describe('Comments API', () => {
     test('GET all comments', async () => {
         const response = await request(app).get('/comment');
         expect(response.statusCode).toBe(200);
-        expect(response.body.length).toBe(commentsData.length);
+        expect(response.body.length).toBe(commentData.length);
 
         // store the _id for later tests
-        for (let i=0; i<commentsData.length; i++){
-            commentsData[i]._id = response.body[i]._id;
+        for (let i=0; i<commentData.length; i++){
+            commentData[i]._id = response.body[i]._id;
         }
     });
 
     test('GET comments by movieId', async () => {
-        const response = await request(app).get('/comment?movieId='+ commentsData[0].movieId);
+        const response = await request(app).get('/comment?movieId='+ commentData[0].movieId);
         expect(response.statusCode).toBe(200);
         expect(response.body.length).toBe(2);
-        expect(response.body[0].userId).toBe(commentsData[0].userId);
-        expect(response.body[1].userId).toBe(commentsData[2].userId);
+        expect(response.body[0].userId).toBe(commentData[0].userId);
+        expect(response.body[1].userId).toBe(commentData[2].userId);
     });
 
     // get comment by id 
     test('GET comment by ID', async () => {
         // first, get all comments to find an ID
-        const response = await request(app).get('/comment/'+ commentsData[0]._id);
+        const response = await request(app).get('/comment/'+ commentData[0]._id);
         expect(response.statusCode).toBe(200);
-        expect(response.body.message).toBe(commentsData[0].message);
+        expect(response.body.message).toBe(commentData[0].message);
     });
 
     // update comment by id
     test('UPDATE comment by ID', async () => {
-        commentsData[0].message = "updatedComment1";        
+        commentData[0].message = "updatedComment1";        
         const response = await request(app)
-            .put('/comment/' + commentsData[0]._id)
-            .send(commentsData[0]);
+            .put('/comment/' + commentData[0]._id)
+            .set("Authorization", "Bearer " + userData.token)
+            .send(commentData[0]);
         expect(response.statusCode).toBe(200);
-        expect(response.body.message).toBe(commentsData[0].message  );
+        expect(response.body.message).toBe(commentData[0].message  );
     });
 
     // delete comment by id   
     test('DELETE comment by ID', async () => {
         const response = await request(app)
-            .delete('/comment/' + commentsData[0]._id);
+            .delete('/comment/' + commentData[0]._id)
+            .set("Authorization", "Bearer " + userData.token);
         expect(response.statusCode).toBe(200);
 
-        const getResponse = await request(app).get('/comment/' + commentsData[0]._id);
+        const getResponse = await request(app).get('/comment/' + commentData[0]._id);
         expect(getResponse.statusCode).toBe(404);
     });
 
