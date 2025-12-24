@@ -13,6 +13,7 @@ class baseController {
     constructor(model) {
         this.model = model;
     }
+    ;
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

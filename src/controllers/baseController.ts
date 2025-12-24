@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {Request, Response} from "express";
 
 class baseController{
@@ -5,8 +6,9 @@ class baseController{
 
     constructor(model: any) {
         this.model = model;
-    }
-    async getAll(req: Request, res: Response) {
+    };
+
+async getAll(req: Request, res: Response) {
   try {
     if (req.query) {
       const filterdata = await this.model.find(req.query);

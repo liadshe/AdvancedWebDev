@@ -15,19 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const supertest_1 = __importDefault(require("supertest"));
 const index_1 = __importDefault(require("../index"));
 const moviesModel_1 = __importDefault(require("../model/moviesModel"));
+const testUtils_1 = require("./testUtils");
 let app;
-const moviesData = [
-    {
-        title: "movie1", year: 2025,
-    },
-    {
-        title: "movie2", year: 2024,
-    }
-];
 beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Befroe All Tests");
     app = yield (0, index_1.default)();
     yield moviesModel_1.default.deleteMany();
+    yield (0, testUtils_1.registerUserTest)(app);
 }));
 afterAll(done => {
     done();
@@ -39,9 +33,9 @@ describe('Movies API', () => {
         expect(response.body).toEqual([]); // when db is empty
     }));
     test('create 2 movies', () => __awaiter(void 0, void 0, void 0, function* () {
-        for (const movie of moviesData) {
+        for (const movie of testUtils_1.movieData) {
             const response = yield (0, supertest_1.default)(app)
-                .post('/movie')
+                .post('/movie').set("Authorization", `Bearer ${testUtils_1.userData.token}`)
                 .send(movie);
             expect(response.statusCode).toBe(201);
             expect(response.body.title).toBe(movie.title);
@@ -52,38 +46,38 @@ describe('Movies API', () => {
     test('GET all movies', () => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield (0, supertest_1.default)(app).get('/movie');
         expect(response.statusCode).toBe(200);
-        expect(response.body.length).toBe(moviesData.length);
+        expect(response.body.length).toBe(testUtils_1.movieData.length);
     }));
     test('GET movies by year', () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app).get('/movie?year=' + moviesData[0].year);
+        const response = yield (0, supertest_1.default)(app).get('/movie?year=' + testUtils_1.movieData[0].year);
         expect(response.statusCode).toBe(200);
         expect(response.body.length).toBe(1);
-        expect(response.body[0].title).toBe(moviesData[0].title);
-        moviesData[0]._id = response.body[0]._id;
+        expect(response.body[0].title).toBe(testUtils_1.movieData[0].title);
+        testUtils_1.movieData[0]._id = response.body[0]._id;
     }));
     // get movie by id 
     test('GET movie by ID', () => __awaiter(void 0, void 0, void 0, function* () {
         // first, get all movies to find an ID
-        const response = yield (0, supertest_1.default)(app).get('/movie/' + moviesData[0]._id);
+        const response = yield (0, supertest_1.default)(app).get('/movie/' + testUtils_1.movieData[0]._id);
         expect(response.statusCode).toBe(200);
-        expect(response.body.title).toBe(moviesData[0].title);
+        expect(response.body.title).toBe(testUtils_1.movieData[0].title);
     }));
     // update movie by id
     test('UPDATE movie by ID', () => __awaiter(void 0, void 0, void 0, function* () {
-        moviesData[0].title = "updatedMovie1";
-        moviesData[0].year = 2023;
+        testUtils_1.movieData[0].title = "updatedMovie1";
+        testUtils_1.movieData[0].year = 2023;
         const response = yield (0, supertest_1.default)(app)
-            .put('/movie/' + moviesData[0]._id)
-            .send(moviesData[0]);
+            .put('/movie/' + testUtils_1.movieData[0]._id).set("Authorization", `Bearer ${testUtils_1.userData.token}`)
+            .send(testUtils_1.movieData[0]);
         expect(response.statusCode).toBe(200);
-        expect(response.body.title).toBe(moviesData[0].title);
+        expect(response.body.title).toBe(testUtils_1.movieData[0].title);
     }));
     // delete movie by id   
     test('DELETE movie by ID', () => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield (0, supertest_1.default)(app)
-            .delete('/movie/' + moviesData[0]._id);
+            .delete('/movie/' + testUtils_1.movieData[0]._id).set("Authorization", `Bearer ${testUtils_1.userData.token}`);
         expect(response.statusCode).toBe(200);
-        const getResponse = yield (0, supertest_1.default)(app).get('/movie/' + moviesData[0]._id);
+        const getResponse = yield (0, supertest_1.default)(app).get('/movie/' + testUtils_1.movieData[0]._id);
         expect(getResponse.statusCode).toBe(404);
     }));
 });
