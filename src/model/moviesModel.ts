@@ -9,5 +9,10 @@ const movieSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true,
+  },
 });
 export default mongoose.model("movie", movieSchema);
