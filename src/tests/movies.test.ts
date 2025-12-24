@@ -4,8 +4,12 @@ import moviesModel from '../model/moviesModel';
 import { Express } from 'express';    
 
 let app:Express;
-
-const moviesData:{title:string, year:number, _id?:string}[] = [
+type Movie = {
+    title: string;
+    year: number;
+    _id?: string;
+};
+const moviesData:Movie[] = [
     {
         title: "movie1", year: 2025, 
     },
