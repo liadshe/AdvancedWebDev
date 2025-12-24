@@ -1,12 +1,15 @@
 import express, { Express } from "express";
 import mongoose from "mongoose";
 import moviesRoute from "./routes/moviesRoute";
+import commentRoute from "./routes/commentsRoute";
 import dotenv from "dotenv";
 dotenv.config({path: '.env.dev'});
 
 const app = express();
 app.use(express.json());
 app.use("/movie", moviesRoute);
+app.use("/comment", commentRoute);
+
 
 const initApp = () => {
   const pr = new Promise<Express>((resolve, reject) => {
