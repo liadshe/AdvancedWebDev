@@ -1,6 +1,7 @@
 import request from "supertest";
 import initApp from '../index';
 import moviesModel from '../model/moviesModel';
+import User from "../model/userModel";
 import { Express } from 'express';    
 
 let app:Express;
@@ -17,10 +18,18 @@ const moviesData:Movie[] = [
         title: "movie2", year: 2024,
     }
 ];
+
+const user = {email: "test@example.com", password: "testpassword", _id:"", token:""};
+
 beforeAll(async () => {  
     console.log("Befroe All Tests") 
     app = await initApp();    
-   await moviesModel.deleteMany();
+    await moviesModel.deleteMany();
+    await User.deleteMany({"email": user.email});
+    // register user and get token
+    const resoponse = await request(app).post('/auth/register').send(user);
+    user._id = resoponse.body._id;
+    user.token = resoponse.body.token;
 });
 
 afterAll(done => {      
@@ -37,7 +46,7 @@ describe('Movies API', () => {
     test('create 2 movies', async () => {
        for (const movie of moviesData){
         const response = await request(app)
-            .post('/movie')
+            .post('/movie').set("Authorization", `Bearer ${user.token}`)
             .send(movie);
         
         expect(response.statusCode).toBe(201);
@@ -72,7 +81,7 @@ describe('Movies API', () => {
         moviesData[0].title = "updatedMovie1";
         moviesData[0].year = 2023;
         const response = await request(app)
-            .put('/movie/' + moviesData[0]._id)
+            .put('/movie/' + moviesData[0]._id).set("Authorization", `Bearer ${user.token}`)
             .send(moviesData[0]);
         expect(response.statusCode).toBe(200);
         expect(response.body.title).toBe(moviesData[0].title);
@@ -81,7 +90,7 @@ describe('Movies API', () => {
     // delete movie by id   
     test('DELETE movie by ID', async () => {
         const response = await request(app)
-            .delete('/movie/' + moviesData[0]._id);
+            .delete('/movie/' + moviesData[0]._id).set("Authorization", `Bearer ${user.token}`);
         expect(response.statusCode).toBe(200);
 
         const getResponse = await request(app).get('/movie/' + moviesData[0]._id);
