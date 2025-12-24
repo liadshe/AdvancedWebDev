@@ -1,16 +1,18 @@
-const request = require('supertest');
-const initApp = require('../index');
-const moviesModel = require('../model/moviesModel');
+import request from "supertest";
+import initApp from '../index';
+import moviesModel from '../model/moviesModel';
+import { Express } from 'express';    
 
-const moviesData = [
+let app:Express;
+
+const moviesData:{title:string, year:number, _id?:string}[] = [
     {
-        title: "movie1", year: 2025
+        title: "movie1", year: 2025, 
     },
     {
-        title: "movie2", year: 2024
+        title: "movie2", year: 2024,
     }
 ];
-let app;
 beforeAll(async () => {  
     console.log("Befroe All Tests") 
     app = await initApp();    
