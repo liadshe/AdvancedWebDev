@@ -7,6 +7,7 @@ type user = {
     password: string;   
     _id?: string;
     token?: string;
+    refreshToken?: string;
 };
 
 export const userData:user = {email: "test@example.com", password: "testpassword"};

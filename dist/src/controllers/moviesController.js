@@ -31,6 +31,45 @@ class MovieController extends baseController_1.default {
             return _super.create.call(this, req, res);
         });
     }
+    update(req, res) {
+        const _super = Object.create(null, {
+            update: { get: () => super.update }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+            const movieId = req.params.id;
+            const movie = yield moviesModel_1.default.findById(movieId);
+            if (!movie) {
+                return;
+            }
+            if (movie.createdBy.toString() !== userId) {
+                res.status(403).json({ message: "Forbidden: You can only update your own movies" });
+                return;
+            }
+            return _super.update.call(this, req, res);
+        });
+    }
+    del(req, res) {
+        const _super = Object.create(null, {
+            del: { get: () => super.del }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+            const movieId = req.params.id;
+            const movie = yield moviesModel_1.default.findById(movieId);
+            if (!movie) {
+                return;
+            }
+            if (movie.createdBy.toString() !== userId) {
+                res.status(403).json({ message: "Forbidden: You can only delete your own movies" });
+                return;
+            }
+            return _super.del.call(this, req, res);
+            ;
+        });
+    }
 }
 exports.default = new MovieController();
 //# sourceMappingURL=moviesController.js.map
