@@ -1,1 +1,1 @@
-{"version":3,"file":"moviesController.js","sourceRoot":"","sources":["../../../src/controllers/moviesController.ts"],"names":[],"mappings":";;;;;AAAA,uEAA8C;AAE9C,sEAA8C;AAE9C,MAAM,eAAe,GAAG,IAAI,wBAAc,CAAC,qBAAU,CAAC,CAAC;AAEvD,kBAAe,eAAe,CAAA"}
+{"version":3,"file":"moviesController.js","sourceRoot":"","sources":["../../../src/controllers/moviesController.ts"],"names":[],"mappings":";;;;;AAAA,uEAA8C;AAC9C,sEAA8C;AAE9C,MAAM,eAAe,GAAG,IAAI,wBAAc,CAAC,qBAAU,CAAC,CAAC;AAEvD,kBAAe,eAAe,CAAA"}
