@@ -45,7 +45,12 @@ describe('Movies API', () => {
         expect(response.body.year).toBe(movie.year);
        };
     }) ;
-
+    test('GET all movies', async () => {    
+        const response = await request(app).get('/movie');
+        expect(response.statusCode).toBe(200);
+        expect(response.body.length).toBe(moviesData.length);
+    });
+    
     test('GET movies by year', async () => {
         const response = await request(app).get('/movie?year='+ moviesData[0].year);
         expect(response.statusCode).toBe(200);
