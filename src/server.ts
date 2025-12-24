@@ -1,4 +1,4 @@
-const initApp = require('./index.js');
+import initApp from "./index";
 const port = process.env.PORT;
 
 initApp().then((app) => {

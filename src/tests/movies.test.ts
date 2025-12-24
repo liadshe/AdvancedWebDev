@@ -1,16 +1,22 @@
-const request = require('supertest');
-const initApp = require('../index');
-const moviesModel = require('../model/moviesModel');
+import request from "supertest";
+import initApp from '../index';
+import moviesModel from '../model/moviesModel';
+import { Express } from 'express';    
 
-const moviesData = [
+let app:Express;
+type Movie = {
+    title: string;
+    year: number;
+    _id?: string;
+};
+const moviesData:Movie[] = [
     {
-        title: "movie1", year: 2025
+        title: "movie1", year: 2025, 
     },
     {
-        title: "movie2", year: 2024
+        title: "movie2", year: 2024,
     }
 ];
-let app;
 beforeAll(async () => {  
     console.log("Befroe All Tests") 
     app = await initApp();    
@@ -39,7 +45,12 @@ describe('Movies API', () => {
         expect(response.body.year).toBe(movie.year);
        };
     }) ;
-
+    test('GET all movies', async () => {    
+        const response = await request(app).get('/movie');
+        expect(response.statusCode).toBe(200);
+        expect(response.body.length).toBe(moviesData.length);
+    });
+    
     test('GET movies by year', async () => {
         const response = await request(app).get('/movie?year='+ moviesData[0].year);
         expect(response.statusCode).toBe(200);
