@@ -1,6 +1,5 @@
 import express from "express";
 import commentsController from "../controllers/commentsController";
-
 const router = express.Router();
 
 router.get("/", commentsController.getAll.bind(commentsController)); 
