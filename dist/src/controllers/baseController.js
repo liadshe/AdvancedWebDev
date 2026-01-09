@@ -9,17 +9,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-class baseController {
+class BaseController {
     constructor(model) {
         this.model = model;
     }
-    ;
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (req.query) {
-                    const filterdata = yield this.model.find(req.query);
-                    return res.json(filterdata);
+                    const filterData = yield this.model.find(req.query);
+                    return res.json(filterData);
                 }
                 else {
                     const data = yield this.model.find();
@@ -28,7 +27,7 @@ class baseController {
             }
             catch (err) {
                 console.error(err);
-                res.status(500).send("Error retrieving data");
+                res.status(500).send("Error retrieving movies");
             }
         });
     }
@@ -39,27 +38,30 @@ class baseController {
             try {
                 const data = yield this.model.findById(id);
                 if (!data) {
-                    return res.status(404).send("Data not found");
+                    return res.status(404).send("Movie not found");
                 }
-                res.json(data);
+                else {
+                    res.json(data);
+                }
             }
             catch (err) {
                 console.error(err);
-                res.status(500).send("Error retrieving data by ID");
+                res.status(500).send("Error retrieving movie by ID");
             }
         });
     }
     ;
     create(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = req.body;
+            const movieData = req.body;
+            console.log(movieData);
             try {
-                const newData = yield this.model.create(data);
-                res.status(201).json(newData);
+                const data = yield this.model.create(movieData);
+                res.status(201).json(data);
             }
             catch (err) {
                 console.error(err);
-                res.status(500).send("Error creating data");
+                res.status(500).send("Error creating movie");
             }
         });
     }
@@ -69,14 +71,12 @@ class baseController {
             const id = req.params.id;
             try {
                 const deletedData = yield this.model.findByIdAndDelete(id);
-                if (!deletedData) {
-                    return res.status(404).send("Data not found");
-                }
-                res.status(200).json(deletedData._id);
+                res.status(200).json(deletedData);
+                console.log("delete data -----" + deletedData);
             }
             catch (err) {
                 console.error(err);
-                res.status(500).send("Error deleting data");
+                res.status(500).send("Error deleting movie");
             }
         });
     }
@@ -93,12 +93,12 @@ class baseController {
             }
             catch (err) {
                 console.error(err);
-                res.status(500).send("Error updating data");
+                res.status(500).send("Error updating movie");
             }
         });
     }
     ;
 }
 ;
-exports.default = baseController;
+exports.default = BaseController;
 //# sourceMappingURL=baseController.js.map

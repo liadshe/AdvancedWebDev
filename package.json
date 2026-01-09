@@ -10,7 +10,8 @@
     "test": "tsc && jest --detectOpenHandles --forceExit --runInBand",
     "testComment": "tsc && jest --detectOpenHandles --forceExit --runInBand ./src/tests/comments.test.ts",
     "testMovies": "tsc && jest --detectOpenHandles --forceExit --runInBand ./src/tests/movies.test.ts",
-    "testAuth": "tsc && jest --detectOpenHandles --forceExit --runInBand ./src/tests/auth.test.ts"
+    "testAuth": "tsc && jest --detectOpenHandles --forceExit --runInBand ./src/tests/auth.test.ts",
+    "testLLMSearch": "tsc && jest --runInBand --detectOpenHandles --forceExit ./src/tests/services/llmService.test.ts"
   },
   "author": "Menachi",
   "license": "ISC",

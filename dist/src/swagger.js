@@ -4,69 +4,547 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.swaggerSpec = exports.swaggerUi = void 0;
+const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 exports.swaggerUi = swagger_ui_express_1.default;
-const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const options = {
     definition: {
-        openapi: "3.0.0",
+        openapi: '3.0.0',
         info: {
-            title: "Lesson API",
-            version: "1.0.0",
-            description: "API documentation for the lesson project",
+            title: 'Movies & Comments API',
+            version: '1.0.0',
+            description: 'A RESTful API for managing movies and comments with user authentication',
+            contact: {
+                name: 'Menachi',
+                email: 'developer@example.com',
+            },
         },
-        // Set servers so Swagger UI 'Try it out' targets the real API server
         servers: [
             {
-                url: process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
-                description: "Primary API server"
-            }
+                url: `http://localhost:${process.env.PORT || 3000}`,
+                description: 'Development server',
+            },
         ],
         components: {
             securitySchemes: {
                 bearerAuth: {
-                    type: "http",
-                    scheme: "bearer",
-                    bearerFormat: "JWT",
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                    description: 'Enter JWT Bearer token',
                 },
             },
             schemas: {
-                UserCredentials: {
-                    type: "object",
-                    properties: {
-                        email: { type: "string", example: "user@example.com" },
-                        password: { type: "string", example: "mypassword" }
-                    },
-                    required: ["email", "password"]
-                },
-                AuthResponse: {
-                    type: "object",
-                    properties: {
-                        token: { type: "string" },
-                        refreshToken: { type: "string" }
-                    }
-                },
                 Movie: {
-                    type: "object",
+                    type: 'object',
+                    required: ['title', 'year'],
                     properties: {
-                        title: { type: "string" },
-                        description: { type: "string" },
-                        createdBy: { type: "string" }
-                    }
+                        _id: {
+                            type: 'string',
+                            description: 'Movie ID (MongoDB ObjectId)',
+                            example: '507f1f77bcf86cd799439011',
+                        },
+                        title: {
+                            type: 'string',
+                            description: 'Movie title',
+                            example: 'The Matrix',
+                        },
+                        year: {
+                            type: 'number',
+                            description: 'Release year',
+                            example: 1999,
+                        },
+                        creatredBy: {
+                            type: 'string',
+                            description: 'ID of the user who created the movie',
+                            example: '507f1f77bcf86cd799439012',
+                        },
+                    },
+                },
+                User: {
+                    type: 'object',
+                    required: ['email', 'password'],
+                    properties: {
+                        _id: {
+                            type: 'string',
+                            description: 'User ID (MongoDB ObjectId)',
+                            example: '507f1f77bcf86cd799439012',
+                        },
+                        email: {
+                            type: 'string',
+                            format: 'email',
+                            description: 'User email address',
+                            example: 'user@example.com',
+                        },
+                        password: {
+                            type: 'string',
+                            description: 'User password (hashed)',
+                            example: 'password123',
+                        },
+                    },
                 },
                 Comment: {
-                    type: "object",
+                    type: 'object',
+                    required: ['content', 'movieId'],
                     properties: {
-                        text: { type: "string" },
-                        movieId: { type: "string" },
-                        createdBy: { type: "string" }
+                        _id: {
+                            type: 'string',
+                            description: 'Comment ID (MongoDB ObjectId)',
+                            example: '507f1f77bcf86cd799439013',
+                        },
+                        content: {
+                            type: 'string',
+                            description: 'Comment content',
+                            example: 'Great movie!',
+                        },
+                        movieId: {
+                            type: 'string',
+                            description: 'ID of the movie being commented on',
+                            example: '507f1f77bcf86cd799439011',
+                        },
+                        userId: {
+                            type: 'string',
+                            description: 'ID of the user who wrote the comment',
+                            example: '507f1f77bcf86cd799439012',
+                        },
+                    },
+                },
+                LoginRequest: {
+                    type: 'object',
+                    required: ['email', 'password'],
+                    properties: {
+                        email: {
+                            type: 'string',
+                            format: 'email',
+                            description: 'User email',
+                            example: 'user@example.com',
+                        },
+                        password: {
+                            type: 'string',
+                            description: 'User password',
+                            example: 'password123',
+                        },
+                    },
+                },
+                RegisterRequest: {
+                    type: 'object',
+                    required: ['email', 'password'],
+                    properties: {
+                        email: {
+                            type: 'string',
+                            format: 'email',
+                            description: 'User email',
+                            example: 'user@example.com',
+                        },
+                        password: {
+                            type: 'string',
+                            minLength: 6,
+                            description: 'User password (minimum 6 characters)',
+                            example: 'password123',
+                        },
+                    },
+                },
+                AuthResponse: {
+                    type: 'object',
+                    properties: {
+                        accessToken: {
+                            type: 'string',
+                            description: 'JWT access token',
+                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        },
+                        refreshToken: {
+                            type: 'string',
+                            description: 'JWT refresh token',
+                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        },
+                    },
+                },
+                RefreshTokenRequest: {
+                    type: 'object',
+                    required: ['refreshToken'],
+                    properties: {
+                        refreshToken: {
+                            type: 'string',
+                            description: 'JWT refresh token',
+                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        },
+                    },
+                },
+                Error: {
+                    type: 'object',
+                    properties: {
+                        message: {
+                            type: 'string',
+                            description: 'Error message',
+                            example: 'An error occurred',
+                        },
+                        status: {
+                            type: 'number',
+                            description: 'HTTP status code',
+                            example: 400,
+                        },
+                    },
+                },
+            },
+        },
+        tags: [
+            {
+                name: 'Authentication',
+                description: 'User authentication and authorization endpoints',
+            },
+            {
+                name: 'Movies',
+                description: 'Movie management endpoints',
+            },
+            {
+                name: 'Comments',
+                description: 'Comment management endpoints',
+            },
+        ],
+    },
+    apis: [], // Will be set conditionally below
+};
+// Manually define paths since JSDoc parsing has issues
+const manualPaths = {
+    '/auth/register': {
+        post: {
+            tags: ['Authentication'],
+            summary: 'Register a new user',
+            description: 'Create a new user account with email and password',
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: { $ref: '#/components/schemas/RegisterRequest' }
                     }
                 }
+            },
+            responses: {
+                201: {
+                    description: 'User registered successfully',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/AuthResponse' }
+                        }
+                    }
+                },
+                400: { description: 'Invalid input data' },
+                409: { description: 'User already exists' }
             }
         }
     },
-    apis: ["./src/routes/*.ts", "./src/controllers/*.ts"],
+    '/auth/login': {
+        post: {
+            tags: ['Authentication'],
+            summary: 'Login user',
+            description: 'Authenticate user and return JWT tokens',
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: { $ref: '#/components/schemas/LoginRequest' }
+                    }
+                }
+            },
+            responses: {
+                200: {
+                    description: 'Login successful',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/AuthResponse' }
+                        }
+                    }
+                },
+                401: { description: 'Invalid credentials' }
+            }
+        }
+    },
+    '/auth/refresh': {
+        post: {
+            tags: ['Authentication'],
+            summary: 'Refresh access token',
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+                    }
+                }
+            },
+            responses: {
+                200: {
+                    description: 'Token refreshed successfully',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/AuthResponse' }
+                        }
+                    }
+                },
+                401: { description: 'Invalid refresh token' }
+            }
+        }
+    },
+    '/movie': {
+        get: {
+            tags: ['Movies'],
+            summary: 'Get all movies',
+            responses: {
+                200: {
+                    description: 'List of movies',
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'array',
+                                items: { $ref: '#/components/schemas/Movie' }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        post: {
+            tags: ['Movies'],
+            summary: 'Create a new movie',
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'object',
+                            required: ['title', 'year'],
+                            properties: {
+                                title: { type: 'string' },
+                                year: { type: 'number' }
+                            }
+                        }
+                    }
+                }
+            },
+            responses: {
+                201: {
+                    description: 'Movie created successfully',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/Movie' }
+                        }
+                    }
+                },
+                401: { description: 'Unauthorized' }
+            }
+        }
+    },
+    '/movie/{id}': {
+        get: {
+            tags: ['Movies'],
+            summary: 'Get movie by ID',
+            parameters: [{
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'string' }
+                }],
+            responses: {
+                200: {
+                    description: 'Movie details',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/Movie' }
+                        }
+                    }
+                },
+                404: { description: 'Movie not found' }
+            }
+        },
+        put: {
+            tags: ['Movies'],
+            summary: 'Update a movie',
+            security: [{ bearerAuth: [] }],
+            parameters: [{
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'string' }
+                }],
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'object',
+                            properties: {
+                                title: { type: 'string' },
+                                year: { type: 'number' }
+                            }
+                        }
+                    }
+                }
+            },
+            responses: {
+                200: { description: 'Movie updated successfully' },
+                401: { description: 'Unauthorized' },
+                403: { description: 'Forbidden - Not the movie creator' },
+                404: { description: 'Movie not found' }
+            }
+        },
+        delete: {
+            tags: ['Movies'],
+            summary: 'Delete a movie',
+            security: [{ bearerAuth: [] }],
+            parameters: [{
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'string' }
+                }],
+            responses: {
+                200: { description: 'Movie deleted successfully' },
+                401: { description: 'Unauthorized' },
+                403: { description: 'Forbidden - Not the movie creator' },
+                404: { description: 'Movie not found' }
+            }
+        }
+    },
+    '/comment': {
+        get: {
+            tags: ['Comments'],
+            summary: 'Get all comments',
+            parameters: [{
+                    name: 'movieId',
+                    in: 'query',
+                    schema: { type: 'string' },
+                    description: 'Filter by movie ID'
+                }],
+            responses: {
+                200: {
+                    description: 'List of comments',
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'array',
+                                items: { $ref: '#/components/schemas/Comment' }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        post: {
+            tags: ['Comments'],
+            summary: 'Create a new comment',
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'object',
+                            required: ['content', 'movieId'],
+                            properties: {
+                                content: { type: 'string' },
+                                movieId: { type: 'string' }
+                            }
+                        }
+                    }
+                }
+            },
+            responses: {
+                201: {
+                    description: 'Comment created successfully',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/Comment' }
+                        }
+                    }
+                },
+                401: { description: 'Unauthorized' }
+            }
+        }
+    },
+    '/comment/{id}': {
+        get: {
+            tags: ['Comments'],
+            summary: 'Get comment by ID',
+            parameters: [{
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'string' }
+                }],
+            responses: {
+                200: {
+                    description: 'Comment details',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/Comment' }
+                        }
+                    }
+                },
+                404: { description: 'Comment not found' }
+            }
+        },
+        put: {
+            tags: ['Comments'],
+            summary: 'Update a comment',
+            security: [{ bearerAuth: [] }],
+            parameters: [{
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'string' }
+                }],
+            requestBody: {
+                required: true,
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'object',
+                            properties: {
+                                content: { type: 'string' },
+                                movieId: { type: 'string' }
+                            }
+                        }
+                    }
+                }
+            },
+            responses: {
+                200: { description: 'Comment updated successfully' },
+                401: { description: 'Unauthorized' },
+                403: { description: 'Forbidden - Not the comment creator' },
+                404: { description: 'Comment not found' }
+            }
+        },
+        delete: {
+            tags: ['Comments'],
+            summary: 'Delete a comment',
+            security: [{ bearerAuth: [] }],
+            parameters: [{
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'string' }
+                }],
+            responses: {
+                200: { description: 'Comment deleted successfully' },
+                401: { description: 'Unauthorized' },
+                403: { description: 'Forbidden - Not the comment creator' },
+                404: { description: 'Comment not found' }
+            }
+        }
+    }
 };
-const swaggerSpec = (0, swagger_jsdoc_1.default)(options);
+// Add manual paths to the options definition
+const completeOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: options.definition.info,
+        servers: options.definition.servers,
+        components: options.definition.components,
+        tags: options.definition.tags,
+        paths: manualPaths
+    },
+    apis: [] // No need for file parsing since we have manual paths
+};
+const swaggerSpec = (0, swagger_jsdoc_1.default)(completeOptions);
 exports.swaggerSpec = swaggerSpec;
 //# sourceMappingURL=swagger.js.map

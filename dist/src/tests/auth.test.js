@@ -15,100 +15,97 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const supertest_1 = __importDefault(require("supertest"));
 const index_1 = __importDefault(require("../index"));
 const userModel_1 = __importDefault(require("../model/userModel"));
-const moviesModel_1 = __importDefault(require("../model/moviesModel"));
-const testUtils_1 = require("./testUtils");
+const utils_1 = require("./utils");
 let app;
 beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Befroe All Tests");
     app = yield (0, index_1.default)();
     yield userModel_1.default.deleteMany();
-    yield moviesModel_1.default.deleteMany();
 }));
-afterAll(done => {
+afterAll((done) => {
     done();
 });
-describe('Auth API', () => {
-    test("Access restricted url denied", () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app).post('/movie').send(testUtils_1.movieData[0]);
-        expect(response.statusCode).toBe(401);
+describe("Test Auth Suite", () => {
+    test("Test post a movie without token fails", () => __awaiter(void 0, void 0, void 0, function* () {
+        const movieData = utils_1.moviesList[0];
+        const response = yield (0, supertest_1.default)(app).post("/movie").send(movieData);
+        expect(response.status).toBe(401);
     }));
-    test('Register Test', () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app).post('/auth/register').send(testUtils_1.userData);
-        testUtils_1.userData._id = response.body._id;
-        testUtils_1.userData.token = response.body.token;
-        testUtils_1.userData.refreshToken = response.body.refreshToken;
+    test("Test Registration", () => __awaiter(void 0, void 0, void 0, function* () {
+        const email = utils_1.userData.email;
+        const password = utils_1.userData.password;
+        const response = yield (0, supertest_1.default)(app).post("/auth/register").send({ "email": email, "password": password });
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty("token");
+        utils_1.userData.token = response.body.token;
+        //check refresh token
+        expect(response.body).toHaveProperty("refreshToken");
+        utils_1.userData.refreshToken = response.body.refreshToken;
+        utils_1.userData._id = response.body._id;
+    }));
+    test("create a movie with token succeeds", () => __awaiter(void 0, void 0, void 0, function* () {
+        const movieData = utils_1.moviesList[0];
+        const response = yield (0, supertest_1.default)(app)
+            .post("/movie")
+            .set("Authorization", "Bearer " + utils_1.userData.token)
+            .send(movieData);
+        expect(response.status).toBe(201);
+    }));
+    test("create a movie with comporomised token fails", () => __awaiter(void 0, void 0, void 0, function* () {
+        const movieData = utils_1.moviesList[0];
+        const compromizedToken = utils_1.userData.token + "a";
+        const response = yield (0, supertest_1.default)(app)
+            .post("/movie")
+            .set("Authorization", "Bearer " + compromizedToken)
+            .send(movieData);
+        expect(response.status).toBe(401);
+    }));
+    test("Test Login", () => __awaiter(void 0, void 0, void 0, function* () {
+        const email = utils_1.userData.email;
+        const password = utils_1.userData.password;
+        const response = yield (0, supertest_1.default)(app).post("/auth/login").send({ "email": email, "password": password });
+        expect(response.status).toBe(200);
         expect(response.body).toHaveProperty("token");
         expect(response.body).toHaveProperty("refreshToken");
-        expect(response.statusCode).toBe(201);
+        utils_1.userData.token = response.body.token;
+        utils_1.userData.refreshToken = response.body.refreshToken;
     }));
-    test('Login Test', () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app).post('/auth/login').send(testUtils_1.userData);
-        testUtils_1.userData._id = response.body._id;
-        testUtils_1.userData.token = response.body.token;
-        testUtils_1.userData.refreshToken = response.body.refreshToken;
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toHaveProperty("token");
-        expect(response.body).toHaveProperty("refreshToken");
-    }));
-    test("Access with token permitted", () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app).post('/movie').set("Authorization", `Bearer ${testUtils_1.userData.token}`).send(testUtils_1.movieData[0]);
-        expect(response.statusCode).toBe(201);
-        expect(response.body).toHaveProperty("_id");
-    }));
-    test("Access with modified token denied", () => __awaiter(void 0, void 0, void 0, function* () {
-        const newToken = testUtils_1.userData.token + "modified";
-        const response = yield (0, supertest_1.default)(app).post('/movie').set("Authorization", `Bearer ${newToken}`).send(testUtils_1.movieData[1]);
-        expect(response.statusCode).toBe(401);
-    }));
-    // set jet timout to 10 seconds
     jest.setTimeout(10000);
-    test("Token Expiration", () => __awaiter(void 0, void 0, void 0, function* () {
-        // assuming the token expiration is set to 5 second for testing purposes
-        yield new Promise(res => setTimeout(res, 6000)); // wait for 6 seconds
-        const response = yield (0, supertest_1.default)(app).post('/movie').set("Authorization", `Bearer ${testUtils_1.userData.token}`).send(testUtils_1.movieData[1]);
-        expect(response.statusCode).toBe(401);
-        // get new token using refresh token
-        const refreshResponse = yield (0, supertest_1.default)(app).post('/auth/refresh-token').send({ refreshToken: testUtils_1.userData.refreshToken });
-        expect(refreshResponse.statusCode).toBe(200);
+    test("Test using token after expiration fails", () => __awaiter(void 0, void 0, void 0, function* () {
+        //sleep for 5 seconds to let the token expire
+        yield new Promise((r) => setTimeout(r, 5000));
+        const movieData = utils_1.moviesList[0];
+        const response = yield (0, supertest_1.default)(app)
+            .post("/movie")
+            .set("Authorization", "Bearer " + utils_1.userData.token)
+            .send(movieData);
+        expect(response.status).toBe(401);
+        //refresh the token
+        const refreshResponse = yield (0, supertest_1.default)(app).post("/auth/refresh").send({ "refreshToken": utils_1.userData.refreshToken });
+        console.log("Refresh response body:", refreshResponse.body);
+        expect(refreshResponse.status).toBe(200);
         expect(refreshResponse.body).toHaveProperty("token");
-        testUtils_1.userData.token = refreshResponse.body.token;
-        testUtils_1.userData.refreshToken = refreshResponse.body.refreshToken;
-        // access with new token
-        const newResponse = yield (0, supertest_1.default)(app).post('/movie').set("Authorization", `Bearer ${testUtils_1.userData.token}`).send(testUtils_1.movieData[2]);
-        expect(newResponse.statusCode).toBe(201);
+        utils_1.userData.token = refreshResponse.body.token;
+        utils_1.userData.refreshToken = refreshResponse.body.refreshToken;
+        //try to create movie again
+        const retryResponse = yield (0, supertest_1.default)(app)
+            .post("/movie")
+            .set("Authorization", "Bearer " + utils_1.userData.token)
+            .send(movieData);
+        expect(retryResponse.status).toBe(201);
     }));
     //test double use of refresh token fails
-    test("Refresh token rotation works correctly", () => __awaiter(void 0, void 0, void 0, function* () {
-        // create a fresh user just for this test
-        const testUser = {
-            email: "rotate@test.com",
-            password: "123456"
-        };
-        const register = yield (0, supertest_1.default)(app)
-            .post("/auth/register")
-            .send(testUser);
-        const initialRefreshToken = register.body.refreshToken;
-        // FIRST use → success
-        const first = yield (0, supertest_1.default)(app)
-            .post("/auth/refresh-token")
-            .send({ refreshToken: initialRefreshToken });
-        expect(first.status).toBe(200);
-        const newRefreshToken = first.body.refreshToken;
-        // reuse OLD token → fail
-        const reusedOld = yield (0, supertest_1.default)(app)
-            .post("/auth/refresh-token")
-            .send({ refreshToken: initialRefreshToken });
-        expect(reusedOld.status).toBe(401);
-        // use NEW token → success
-        const second = yield (0, supertest_1.default)(app)
-            .post("/auth/refresh-token")
-            .send({ refreshToken: newRefreshToken });
-        expect(second.status).toBe(200);
-        // reuse NEW token → fail
-        const reusedNew = yield (0, supertest_1.default)(app)
-            .post("/auth/refresh-token")
-            .send({ refreshToken: newRefreshToken });
-        expect(reusedNew.status).toBe(401);
+    test("Test double use of refresh token fails", () => __awaiter(void 0, void 0, void 0, function* () {
+        //use the current refresh token to get a new token
+        const refreshResponse1 = yield (0, supertest_1.default)(app).post("/auth/refresh").send({ "refreshToken": utils_1.userData.refreshToken });
+        expect(refreshResponse1.status).toBe(200);
+        expect(refreshResponse1.body).toHaveProperty("token");
+        const newRefreshToken = refreshResponse1.body.refreshToken;
+        //try to use the same refresh token again
+        const refreshResponse2 = yield (0, supertest_1.default)(app).post("/auth/refresh").send({ "refreshToken": utils_1.userData.refreshToken });
+        expect(refreshResponse2.status).toBe(401);
+        //try to use the new refresh token also fails
+        const refreshResponse3 = yield (0, supertest_1.default)(app).post("/auth/refresh").send({ "refreshToken": newRefreshToken });
+        expect(refreshResponse3.status).toBe(401);
     }));
 });
 //# sourceMappingURL=auth.test.js.map
