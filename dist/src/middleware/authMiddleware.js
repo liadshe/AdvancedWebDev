@@ -3,22 +3,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.authenticate = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authMiddleware = (req, res, next) => {
+const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Unauthorized: No token provided" });
+        return res.status(401).json({ message: "Unauthorized 1" });
     }
     const token = authHeader.split(" ")[1];
-    const secret = process.env.JWT_SECRET || "defaultsecret";
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized 2" });
+    }
+    const secret = process.env.JWT_SECRET || "default_secret";
     try {
         const decoded = jsonwebtoken_1.default.verify(token, secret);
-        req.user = { _id: decoded.userId };
+        req.user = { _id: decoded._id };
         next();
     }
-    catch (_a) {
-        return res.status(401).json({ error: "Unauthorized: Invalid token" });
+    catch (err) {
+        return res.status(401).json({ message: "Unauthorized 3" });
     }
 };
-exports.default = authMiddleware;
+exports.authenticate = authenticate;
 //# sourceMappingURL=authMiddleware.js.map

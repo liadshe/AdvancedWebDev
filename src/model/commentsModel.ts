@@ -1,17 +1,20 @@
 import mongoose from "mongoose";
 
-const commentSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: true,
-  },
-  message: {
-    type: String,
-    required: true,
-  },
+const commentsSchema = new mongoose.Schema({
   movieId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "movie",
+    required: true,
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true,
+  },
+  content: {
     type: String,
     required: true,
   },
 });
-export default mongoose.model("comment", commentSchema);
+
+export default mongoose.model("comment", commentsSchema);
