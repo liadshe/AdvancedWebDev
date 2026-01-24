@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import moviesRoute from "./routes/moviesRoute";
 import commentRoute from "./routes/commentsRoute";
 import authRoute from "./routes/authRoute";
+import multerRoute from "./routes/multerRoute";
 import dotenv from "dotenv";
 dotenv.config({path: '.env.dev'});
 
@@ -19,6 +20,8 @@ app.use((req, res,next) => {
 app.use("/movie", moviesRoute);
 app.use("/comment", commentRoute);
 app.use("/auth", authRoute);
+app.use("/uploads", express.static('public/uploads'));
+app.use("/upload", multerRoute);
 
 
 const initApp = () => {

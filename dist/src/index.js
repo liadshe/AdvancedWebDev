@@ -8,13 +8,22 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const moviesRoute_1 = __importDefault(require("./routes/moviesRoute"));
 const commentsRoute_1 = __importDefault(require("./routes/commentsRoute"));
 const authRoute_1 = __importDefault(require("./routes/authRoute"));
+const multerRoute_1 = __importDefault(require("./routes/multerRoute"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config({ path: '.env.dev' });
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader("Access-Control-Allow-Headers", "*");
+    res.setHeader("Access-Control-Allow-Methods", "*");
+    next();
+});
 app.use("/movie", moviesRoute_1.default);
 app.use("/comment", commentsRoute_1.default);
 app.use("/auth", authRoute_1.default);
+app.use("/uploads", express_1.default.static('public/uploads'));
+app.use("/upload", multerRoute_1.default);
 const initApp = () => {
     const pr = new Promise((resolve, reject) => {
         const dbUrl = process.env.DATABASE_URL;
