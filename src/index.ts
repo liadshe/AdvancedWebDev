@@ -11,14 +11,13 @@ dotenv.config({ path: ".env.dev" });
 const app = express();
 app.use(express.json());
 
-// Swagger UI setup
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Movies & Comments API Documentation'
-}));
+app.use((req, res,next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader("Access-Control-Allow-Headers", "*");
+    res.setHeader("Access-Control-Allow-Methods", "*");
+    next();
+});
 
-// API routes
 app.use("/movie", moviesRoute);
 app.use("/comment", commentsRoute);
 app.use("/auth", authRoute);
