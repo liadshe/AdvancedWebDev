@@ -1,83 +1,79 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {Request, Response} from "express";
 
-class baseController{
+import { Request, Response } from "express";
+
+class BaseController {
     model: any;
 
     constructor(model: any) {
         this.model = model;
+    }
+
+    async getAll(req: Request, res: Response) {
+        try {
+            if (req.query) {
+                const filterData = await this.model.find(req.query);
+                return res.json(filterData);
+            } else {
+                const data = await this.model.find();
+                res.json(data);
+            }
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Error retrieving movies");
+        }
     };
 
-async getAll(req: Request, res: Response) {
-  try {
-    if (req.query) {
-      const filterdata = await this.model.find(req.query);
-      return res.json(filterdata);
-    } else {
-      const data = await this.model.find();
-      res.json(data);
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error retrieving data");
-  }
+    async getById(req: Request, res: Response) {
+        const id = req.params.id;
+        try {
+            const data = await this.model.findById(id);
+            if (!data) {
+                return res.status(404).send("Movie not found");
+            } else {
+                res.json(data);
+            }
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Error retrieving movie by ID");
+        }
+    };
+
+    async create(req: Request, res: Response) {
+        const movieData = req.body;
+        console.log(movieData);
+        try {
+            const data = await this.model.create(movieData);
+            res.status(201).json(data);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Error creating movie");
+        }
+    };
+
+    async del(req: Request, res: Response) {
+        const id = req.params.id;
+        try {
+            const deletedData = await this.model.findByIdAndDelete(id);
+            res.status(200).json(deletedData);
+            console.log("delete data -----" + deletedData);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Error deleting movie");
+        }
+    };
+
+    async update(req: Request, res: Response) {
+        const id = req.params.id;
+        const updatedData = req.body;
+        try {
+            const data = await this.model.findByIdAndUpdate(id, updatedData, {
+                new: true,
+            });
+            res.json(data);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Error updating movie");
+        }
+    };
 };
-
-async getById(req: Request, res: Response){
-  const id = req.params.id;
-  try {
-    const data = await this.model.findById(id);
-
-    if (!data) {
-      return res.status(404).send("Data not found");
-    }
-    res.json(data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error retrieving data by ID");
-  }
-};
-
-async create(req: Request, res: Response){
-  const data = req.body;
-  try {
-    const newData = await this.model.create(data);
-    res.status(201).json(newData);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error creating data");
-  }
-};
-
-async del(req: Request, res: Response) {
-  const id = req.params.id;
-  try {
-    const deletedData = await this.model.findByIdAndDelete(id);
-    if (!deletedData) {
-      return res.status(404).send("Data not found");
-    }
-    res.status(200).json(deletedData._id);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error deleting data");
-  }
-};
-
-async update(req: Request, res: Response) {
-  const id = req.params.id;
-  const updatedData = req.body;
-  try {
-    const data = await this.model.findByIdAndUpdate(id, updatedData, {
-      new: true,
-    });
-    res.json(data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error updating data");
-  }
-};
-};
-
-export default baseController;
-
-
+export default BaseController

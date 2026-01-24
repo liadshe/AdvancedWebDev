@@ -1,132 +1,118 @@
-import {Request, Response} from "express";
-import User from "../model/userModel";
+import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import User from "../model/userModel";
 import jwt from "jsonwebtoken";
 
-interface DecodedToken {
-    userId: string;
-    email: string;
-}
-
-const sendError = (res: Response, message: string, code: number = 500) => {
+const sendError = (code: number, message: string, res: Response) => {
     res.status(code).json({ message });
 }
-type Tokens = {
-    token: string;
-    refreshToken: string;
-}
-const generateToken = (userId: string, email: string): Tokens => {
-        const secret = process.env.JWT_SECRET || "defaultsecret";
-        const secretRefresh = process.env.JWT_REFRESH_SECRET || "defaultrefreshsecret";
-        const expires: number = parseInt(process.env.JWT_EXPIRES_IN || "3600");     
-        const expiresRefresh: number = parseInt(process.env.JWT_REFRESH_EXPIRES_IN || "604800");
-        const token = jwt.sign({ userId: userId, email: email }, secret, { expiresIn: expires });
-        const refreshToken = jwt.sign({ userId: userId, email: email, jti: Date.now().toString()  }, secretRefresh, { expiresIn: expiresRefresh });
-        return { token, refreshToken };
+
+type GeneratedTokens = {
+    token: string,
+    refreshToken: string
+};
+
+const generateToken = (userId: string): GeneratedTokens => {
+    const secret = process.env.JWT_SECRET || "default_secret";
+    //TODO: check if no secret close the server
+    const expiresIn = parseInt(process.env.JWT_EXPIRES_IN || "3600");
+    const token = jwt.sign(
+        { _id: userId },
+        secret,
+        { expiresIn: expiresIn }
+    );
+
+    const refreshExpiresIn = parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN || "1440");
+    const rand = Math.floor(Math.random() * 1000);
+    const refreshToken = jwt.sign(
+        { _id: userId, rand: rand },
+        secret,
+        { expiresIn: refreshExpiresIn }
+    );
+    return { token, refreshToken };
 }
 
 const register = async (req: Request, res: Response) => {
-    // extract email and password from req.body
-    const { email, password } = req.body;
-
-    // check if email or password is missing
+    const email = req.body.email;
+    const password = req.body.password;
     if (!email || !password) {
-        return sendError(res, "Email and password are required");
+        return sendError(400, "Email and password are required", res);
     }
     try {
-
-    // hash the password
-    const salt = await bcrypt.genSalt(10);
-    const encryptedPassword = await bcrypt.hash(password, salt);
-
-    // create new user in the database
-    const newUser = await User.create({ email, password: encryptedPassword });
-
-    // generate JWT token
-    const { token, refreshToken } = generateToken(newUser._id.toString(), newUser.email);
-
-    // save refresh token to user
-    newUser.refreshTokens.push(refreshToken);
-    await newUser.save();
-
-    // respond with the token
-    res.status(201).json({ "token": token, "refreshToken": refreshToken });
-    } 
-    catch (error) {
-        return sendError(res, "Error registering user: " + error);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const user = await User.create({ "email": email, "password": hashedPassword });
+        const tokens = generateToken(user._id.toString());
+        user.refreshTokens.push(tokens.refreshToken);
+        await user.save();
+        res.status(201).json(tokens);
+    } catch (err) {
+        return sendError(500, "Internal server error", res);
     }
-
-};
+}
 const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    // Login logic here
+    const email = req.body.email;
+    const password = req.body.password;
     if (!email || !password) {
-        return sendError(res, "Email and password are required");
+        return sendError(400, "Email and password are required", res);
     }
-
-    try{
-        const user = await User.findOne({ email });
-        if (!user) {
-            return sendError(res, "Invalid email or password", 401);
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return sendError(res, "Invalid email or password", 401);
-        }
-
-        // generate JWT token
-        const { token, refreshToken } = generateToken(user._id.toString(), user.email);
-
-        // save refresh token to user
-        user.refreshTokens.push(refreshToken);
-        await user.save();
-
-        // respond with the token
-        res.status(200).json({ "token": token, "refreshToken": refreshToken });
-
-    }
-    catch (error) {
-        return sendError(res, "Error logging in user: " + error);
-    }
-};
-
-const refreshToken = async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-        return sendError(res, "Refresh token is required");
-    }   
     try {
-        const secretRefresh = process.env.JWT_REFRESH_SECRET || "defaultrefreshsecret";
-        const decoded = jwt.verify(refreshToken, secretRefresh) as DecodedToken;
-        
-        const user = await User.findOneAndUpdate(
-            {
-                _id: decoded.userId,
-                refreshTokens: refreshToken
-            },
-            {
-                $pull: { refreshTokens: refreshToken }
-            },
-            { new: true }
-        );
-        
-    
+        const user = await User.findOne({ email: email });
         if (!user) {
-            return sendError(res, "Invalid refresh token", 401);
+            return sendError(401, "Invalid email or password 1", res);
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return sendError(401, "Invalid email or password 2", res);
         }
 
-        const tokens = generateToken(user._id.toString(), user.email)
-
-        user.refreshTokens.push(tokens.refreshToken)
-
+        const tokens = generateToken(user._id.toString());
+        user.refreshTokens.push(tokens.refreshToken);
         await user.save();
-
-
-        // respond with the new token
         res.status(200).json(tokens);
-    } catch (error) {
-        return sendError(res, "Error refreshing token: " + error, 401);
-    }
 
+    } catch (err) {
+        return sendError(500, "Internal server error", res);
+    }
+}
+
+//refresh token function to be implemented
+const refreshToken = async (req: Request, res: Response) => {
+    // Refresh token logic here
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+        return sendError(400, "Refresh token is required", res);
+    }
+    const secret = process.env.JWT_SECRET || "default_secret";
+    try {
+        const decoded = jwt.verify(refreshToken, secret) as { _id: string };
+        const user = await User.findById(decoded._id);
+        if (!user) {
+            return sendError(401, "Invalid refresh token", res);
+        }
+        // Check if the refresh token exists in the user's refreshTokens array
+        if (!user.refreshTokens.includes(refreshToken)) {
+            //clear the refresh tokens array and save
+            user.refreshTokens = [];
+            await user.save();
+            console.log(" **** Possible token theft for user:", user._id);
+            return sendError(401, "Invalid refresh token", res);
+        }
+        const tokens = generateToken(decoded._id);
+        //remove old token from user refreshTokens and add the new one
+        user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
+        user.refreshTokens.push(tokens.refreshToken);
+        await user.save();
+        res.status(200).json(tokens);
+    } catch (err) {
+        return sendError(401, "Invalid refresh token", res);
+    }
 };
 
-export default { register, login, refreshToken }
+
+export default {
+    register,
+    login,
+    refreshToken
+};

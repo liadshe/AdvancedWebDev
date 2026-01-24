@@ -4,19 +4,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
-const commentSchema = new mongoose_1.default.Schema({
-    userId: {
-        type: String,
-        required: true,
-    },
-    message: {
-        type: String,
-        required: true,
-    },
+const commentsSchema = new mongoose_1.default.Schema({
     movieId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "movie",
+        required: true,
+    },
+    userId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "user",
+        required: true,
+    },
+    content: {
         type: String,
         required: true,
     },
 });
-exports.default = mongoose_1.default.model("comment", commentSchema);
+exports.default = mongoose_1.default.model("comment", commentsSchema);
 //# sourceMappingURL=commentsModel.js.map

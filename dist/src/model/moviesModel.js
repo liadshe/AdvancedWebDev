@@ -13,7 +13,7 @@ const movieSchema = new mongoose_1.default.Schema({
         type: Number,
         required: true,
     },
-    createdBy: {
+    creatredBy: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "user",
         required: true,
